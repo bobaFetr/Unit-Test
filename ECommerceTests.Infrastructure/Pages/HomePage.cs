@@ -5,33 +5,37 @@ namespace ECommerceTests.Infrastructure.Pages;
 
 public sealed class HomePage : BasePage
 {
-    private readonly By _signupLoginLink = By.XPath("//a[contains(@href, '/login') and normalize-space()='Signup / Login']");
-    private readonly By _productsLink = By.XPath("//a[contains(@href, '/products') and normalize-space()='Products']");
-    private readonly By _cartLink = By.XPath("//a[contains(@href, '/view_cart') and normalize-space()='Cart']");
-    private readonly By _logoutLink = By.XPath("//a[contains(@href, '/logout') and normalize-space()='Logout']");
-    private readonly By _loggedInUserLabel = By.XPath("//a[contains(normalize-space(), 'Logged in as')]");
-    private readonly By _deleteAccountLink = By.XPath("//a[contains(@href, '/delete_account') and normalize-space()='Delete Account']");
-    private readonly By _continueButton = By.XPath("//a[@data-qa='continue-button' or normalize-space()='Continue']");
-    private readonly By _accountCreatedLabel = By.XPath("//*[contains(translate(normalize-space(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'ACCOUNT CREATED!')]");
-    private readonly By _accountDeletedLabel = By.XPath("//*[contains(translate(normalize-space(), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'ACCOUNT DELETED!')]");
+    private readonly By _loginLink = By.XPath("//a[contains(@href, '/login') and normalize-space()='Log in']");
+    private readonly By _cartLink = By.XPath("//a[contains(@href, '/cart') and contains(@class, 'ico-cart')]");
+    private readonly By _logoutLink = By.XPath("//a[contains(@href, '/logout') and normalize-space()='Log out']");
+    private readonly By _accountLink = By.XPath("//div[contains(@class, 'header-links')]//a[contains(@class, 'account')]");
+    private readonly By _continueButton = By.XPath("//input[contains(@class, 'register-continue-button') or @value='Continue']");
+    private readonly By _accountCreatedLabel = By.XPath("//div[contains(@class, 'registration-result-page')]//div[contains(@class, 'result') and contains(normalize-space(), 'Your registration completed')]");
 
     public HomePage(IWebDriver driver)
         : base(driver)
     {
     }
 
-    public override string RelativeUrl => string.Empty;
+    public override string RelativeUrl => Urls.Home;
+
+    public override void Open()
+    {
+        base.Open();
+        DismissConsentIfPresent();
+    }
 
     public LoginPage GoToLoginPage()
     {
-        Click(_signupLoginLink);
+        Click(_loginLink);
         return new LoginPage(Driver);
     }
 
     public ProductsPage GoToProductsPage()
     {
-        Click(_productsLink);
-        return new ProductsPage(Driver);
+        var productsPage = new ProductsPage(Driver);
+        productsPage.Open();
+        return productsPage;
     }
 
     public CartPage GoToCartPage()
@@ -42,7 +46,7 @@ public sealed class HomePage : BasePage
 
     public bool IsLoggedIn()
     {
-        return IsElementDisplayed(_loggedInUserLabel);
+        return IsElementDisplayed(_accountLink, 2) || IsElementDisplayed(_logoutLink, 2);
     }
 
     public bool IsLogoutVisible()
@@ -52,7 +56,16 @@ public sealed class HomePage : BasePage
 
     public string GetLoggedInUsername()
     {
-        return GetText(_loggedInUserLabel).Replace(Messages.LoggedInAs, string.Empty).Trim();
+        if (!IsElementDisplayed(_accountLink, 2))
+        {
+            return string.Empty;
+        }
+
+        var accountText = GetText(_accountLink).Trim();
+
+        return string.IsNullOrEmpty(Messages.LoggedInAs)
+            ? accountText
+            : accountText.Replace(Messages.LoggedInAs, string.Empty).Trim();
     }
 
     public bool IsAccountCreatedVisible()
@@ -62,7 +75,7 @@ public sealed class HomePage : BasePage
 
     public bool IsAccountDeletedVisible()
     {
-        return IsElementDisplayed(_accountDeletedLabel);
+        return false;
     }
 
     public void ContinueAfterAccountAction()
@@ -75,12 +88,18 @@ public sealed class HomePage : BasePage
 
     public void DeleteCurrentAccount()
     {
-        Click(_deleteAccountLink);
-        WaitForPageReady();
+    }
+
+    public void Logout()
+    {
+        if (IsElementDisplayed(_logoutLink, 2))
+        {
+            Click(_logoutLink);
+        }
     }
 
     public bool CanDeleteCurrentAccount()
     {
-        return IsElementDisplayed(_deleteAccountLink, 2);
+        return false;
     }
 }

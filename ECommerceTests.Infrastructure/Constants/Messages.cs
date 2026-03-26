@@ -2,14 +2,14 @@ namespace ECommerceTests.Infrastructure.Constants;
 
 public static class Messages
 {
-    public const string InvalidLogin = "Your email or password is incorrect!";
-    public const string ExistingEmail = "Email Address already exist!";
-    public const string LoggedInAs = "Logged in as";
-    public const string SearchResultsHeading = "Searched Products";
-    public const string LoginHeading = "Login to your account";
-    public const string SignupHeading = "New User Signup!";
-    public const string EnterAccountInformation = "Enter Account Information";
-    public const string CartEmpty = "Cart is empty!";
-    public const string AddressDetails = "Address Details";
-    public const string ReviewYourOrder = "Review Your Order";
+    public const string InvalidLogin = "Login was unsuccessful. Please correct the errors and try again.";
+    public const string ExistingEmail = "The specified email already exists";
+    public const string RegistrationCompleted = "Your registration completed";
+    public const string LoggedInAs = "";
+    public const string SearchResultsHeading = "Search";
+    public const string LoginHeading = "Welcome, Please Sign In!";
+    public const string SignupHeading = "Register";
+    public const string EnterAccountInformation = "Register";
+    public const string CartEmpty = "Your Shopping Cart is empty!";
+    public const string BillingAddress = "Billing address";
 }

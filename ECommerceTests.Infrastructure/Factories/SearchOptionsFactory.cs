@@ -9,8 +9,8 @@ public static class SearchOptionsFactory
     {
         return new SearchOptionsDto
         {
-            SearchTerm = "Blue Top",
-            ExpectedProducts = ProductFactory.CreateBlueTopOnlySearchResults(),
+            SearchTerm = "14.1-inch Laptop",
+            ExpectedProducts = ProductFactory.CreateLaptopOnlySearchResults(),
             ExpectResults = true
         };
     }
@@ -19,8 +19,8 @@ public static class SearchOptionsFactory
     {
         return new SearchOptionsDto
         {
-            SearchTerm = "Top",
-            ExpectedProducts = ProductFactory.CreateTopSearchResults(),
+            SearchTerm = "laptop",
+            ExpectedProducts = ProductFactory.CreateLaptopSearchResults(),
             ExpectResults = true
         };
     }
@@ -29,8 +29,8 @@ public static class SearchOptionsFactory
     {
         return new SearchOptionsDto
         {
-            SearchTerm = "blue top",
-            ExpectedProducts = ProductFactory.CreateBlueTopOnlySearchResults(),
+            SearchTerm = "LAPTOP",
+            ExpectedProducts = ProductFactory.CreateLaptopOnlySearchResults(),
             ExpectResults = true
         };
     }

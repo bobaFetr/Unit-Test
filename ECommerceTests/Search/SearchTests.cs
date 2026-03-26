@@ -8,6 +8,7 @@ using NUnit.Framework;
 namespace ECommerceTests.Search;
 
 [TestFixture]
+[CancelAfter(20000)]
 public sealed class SearchTests : BaseTest
 {
     public static IEnumerable<TestCaseData> PositiveSearchCases()
@@ -70,15 +71,15 @@ public sealed class SearchTests : BaseTest
             Assert.That(
                 productsPage.IsCurrentPage() || productsPage.IsSearchResultsHeadingVisible(),
                 Is.True,
-                "Submitting an empty search should keep the user in a stable products browsing state.");
+                "Submitting an empty search should keep the user in a stable Demo Web Shop browsing state.");
             Assert.That(
                 productsPage.GetSearchInputValue(),
                 Is.Empty,
-                "The search input should remain empty after submitting an empty search.");
+                "The search input should remain effectively empty after the empty search attempt is blocked.");
             Assert.That(
                 actualProducts.Count,
                 Is.GreaterThan(0),
-                "Submitting an empty search should still leave visible products on the page.");
+                "Submitting an empty search should still leave visible featured products on the page.");
         });
     }
 
@@ -116,7 +117,7 @@ public sealed class SearchTests : BaseTest
 
     /// <summary>
     /// Steps:
-    /// 1. Open the Products page and search for Blue Top.
+    /// 1. Open the Products page and search for 14.1-inch Laptop.
     /// 2. Add the matching product to the cart and continue shopping.
     /// 3. Compare the search results before and after the interaction.
     /// Expected Result:

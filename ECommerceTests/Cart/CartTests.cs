@@ -6,12 +6,13 @@ using NUnit.Framework;
 namespace ECommerceTests.Cart;
 
 [TestFixture]
+[CancelAfter(20000)]
 public sealed class CartTests : BaseTest
 {
     /// <summary>
     /// Steps:
     /// 1. Open the Products page.
-    /// 2. Add the Blue Top product to the cart from the product listing.
+    /// 2. Add the 14.1-inch Laptop product to the cart from the product listing.
     /// 3. Open the cart and compare the cart row DTO with the expected DTO.
     /// Expected Result:
     /// The cart contains the expected product with the correct name, price, and default quantity.
@@ -19,7 +20,7 @@ public sealed class CartTests : BaseTest
     [Test]
     public void AddProductToCart_ShouldAddExpectedProductDto()
     {
-        var expectedProduct = ProductFactory.CreateBlueTop();
+        var expectedProduct = ProductFactory.CreateLaptop();
         var productsPage = HomePage.GoToProductsPage();
 
         productsPage.AddProductToCart(expectedProduct.Name);
@@ -52,7 +53,7 @@ public sealed class CartTests : BaseTest
     [Test]
     public void RemoveProductFromCart_ShouldClearTheCart()
     {
-        var expectedProduct = ProductFactory.CreateBlueTop();
+        var expectedProduct = ProductFactory.CreateLaptop();
         var productsPage = HomePage.GoToProductsPage();
 
         productsPage.AddProductToCart(expectedProduct.Name);
@@ -74,7 +75,7 @@ public sealed class CartTests : BaseTest
 
     /// <summary>
     /// Steps:
-    /// 1. Open the Blue Top product details page from the Products page.
+    /// 1. Open the 14.1-inch Laptop product details page from the Products page.
     /// 2. Change the quantity to 2 and add the product to the cart.
     /// 3. Compare the product details DTO and the cart DTO with the expected DTOs from the factory.
     /// Expected Result:
@@ -83,8 +84,8 @@ public sealed class CartTests : BaseTest
     [TestCase(2)]
     public void Cart_ShouldKeepExpectedQuantityAndDetailsForSelectedProduct(int quantity)
     {
-        var expectedCartProduct = ProductFactory.CreateBlueTop(quantity.ToString());
-        var expectedDetailsProduct = ProductFactory.CreateBlueTopDetails(quantity.ToString());
+        var expectedCartProduct = ProductFactory.CreateLaptop(quantity.ToString());
+        var expectedDetailsProduct = ProductFactory.CreateLaptopDetails(quantity.ToString());
         var productsPage = HomePage.GoToProductsPage();
         var productDetailsPage = productsPage.ViewProduct(expectedCartProduct.Name);
 
@@ -109,38 +110,47 @@ public sealed class CartTests : BaseTest
 
     /// <summary>
     /// Steps:
-    /// 1. Log in with the existing valid user.
+    /// 1. Register and authenticate a unique user.
     /// 2. Add a product to the cart and proceed to checkout.
-    /// 3. Verify the checkout page is displayed and compare the order summary DTO with the expected product DTO.
+    /// 3. Verify the checkout page opens and the cart already contains the expected product DTO.
     /// Expected Result:
-    /// The user reaches checkout successfully and the order summary contains the expected product details.
+    /// The user reaches checkout successfully, the billing step is available, and the expected product is present before checkout begins.
     /// </summary>
     [Test]
     public void CheckoutNavigation_WithAuthenticatedUser_ShouldShowExpectedOrderSummary()
     {
-        LoginWithExistingUser();
-        var expectedProduct = ProductFactory.CreateMenTshirt();
+        var user = RegistrationUserFactory.CreateUniqueUser();
+        var signupPage = HomePage.GoToLoginPage().StartSignup(user);
+        signupPage.CreateAccount(user);
+        Assert.That(
+            HomePage.IsAccountCreatedVisible(),
+            Is.True,
+            "The precondition account should be created successfully before the checkout flow is exercised.");
+
+        HomePage.ContinueAfterAccountAction();
+
+        var expectedProduct = ProductFactory.CreateLaptop();
         var productsPage = HomePage.GoToProductsPage();
 
         productsPage.AddProductToCart(expectedProduct.Name);
         var cartPage = productsPage.ViewCartFromModal();
+        var cartProducts = cartPage.GetProducts();
         var checkoutPage = cartPage.ProceedToCheckout();
-        var checkoutProducts = checkoutPage.GetOrderProducts();
 
         Assert.Multiple(() =>
         {
             Assert.That(
                 checkoutPage.IsCurrentPage(),
                 Is.True,
-                "Proceeding to checkout while authenticated should open the checkout page.");
+                "Proceeding to checkout while authenticated should open the Demo Web Shop checkout page.");
             Assert.That(
-                checkoutPage.IsPlaceOrderVisible(),
+                checkoutPage.IsBillingAddressStepVisible(),
                 Is.True,
-                "The Place Order action should be available on the checkout page.");
+                "The checkout page should expose the billing step when an authenticated user begins checkout.");
             Assert.That(
-                checkoutProducts,
+                cartProducts,
                 Does.Contain(expectedProduct),
-                "The checkout order summary should contain the expected product DTO.");
+                "The cart should contain the expected product before the checkout step begins.");
         });
     }
 }

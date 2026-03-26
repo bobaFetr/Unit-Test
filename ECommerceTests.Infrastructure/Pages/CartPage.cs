@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ECommerceTests.Infrastructure.DTOs;
@@ -7,9 +8,11 @@ namespace ECommerceTests.Infrastructure.Pages;
 
 public sealed class CartPage : BasePage
 {
-    private readonly By _cartRows = By.XPath("//table[@id='cart_info_table']//tr[starts-with(@id, 'product-')]");
-    private readonly By _proceedToCheckoutButton = By.XPath("//a[contains(@class, 'check_out') and normalize-space()='Proceed To Checkout']");
-    private readonly By _emptyCartMessage = By.XPath("//*[contains(normalize-space(), 'Cart is empty')]");
+    private readonly By _cartRows = By.CssSelector("table.cart tbody tr.cart-item-row");
+    private readonly By _updateCartButton = By.CssSelector("input.update-cart-button");
+    private readonly By _proceedToCheckoutButton = By.Id("checkout");
+    private readonly By _termsOfServiceCheckbox = By.Id("termsofservice");
+    private readonly By _emptyCartMessage = By.XPath("//*[contains(normalize-space(), 'Your Shopping Cart is empty')]");
 
     public CartPage(IWebDriver driver)
         : base(driver)
@@ -32,9 +35,10 @@ public sealed class CartPage : BasePage
 
     public void RemoveProduct(string productName)
     {
-        Click(RemoveButton(productName));
+        Click(RemoveCheckbox(productName));
+        Click(_updateCartButton);
         WaitHelper.Until(driver => driver.FindElements(_cartRows).All(
-            row => !row.Text.Contains(productName, System.StringComparison.OrdinalIgnoreCase)));
+            row => !row.Text.Contains(productName, StringComparison.OrdinalIgnoreCase)));
     }
 
     public bool IsEmpty()
@@ -53,21 +57,30 @@ public sealed class CartPage : BasePage
 
     public CheckoutPage ProceedToCheckout()
     {
+        if (IsElementDisplayed(_termsOfServiceCheckbox, 2))
+        {
+            var termsCheckbox = FindVisible(_termsOfServiceCheckbox);
+            if (!termsCheckbox.Selected)
+            {
+                termsCheckbox.Click();
+            }
+        }
+
         Click(_proceedToCheckoutButton);
         return new CheckoutPage(Driver);
     }
 
-    private static By RemoveButton(string productName)
+    private static By RemoveCheckbox(string productName)
     {
         return By.XPath(
-            $"//tr[starts-with(@id, 'product-')][.//td[contains(@class, 'cart_description')]//a[normalize-space()={ToXPathLiteral(productName)}]]//a[contains(@class, 'cart_quantity_delete')]");
+            $"//tr[contains(@class, 'cart-item-row')][.//a[contains(@class, 'product-name') and normalize-space()={ToXPathLiteral(productName)}]]//td[contains(@class, 'remove-from-cart')]//input[@type='checkbox']");
     }
 
     private static ProductDto MapCartRow(IWebElement row)
     {
-        var name = row.FindElement(By.XPath(".//td[contains(@class, 'cart_description')]//a")).Text.Trim();
-        var price = row.FindElement(By.XPath(".//td[contains(@class, 'cart_price')]//p")).Text.Trim();
-        var quantity = row.FindElement(By.XPath(".//td[contains(@class, 'cart_quantity')]//*[self::button or self::input]")).Text.Trim();
+        var name = row.FindElement(By.CssSelector(".product-name")).Text.Trim();
+        var price = row.FindElement(By.CssSelector(".product-unit-price")).Text.Trim();
+        var quantity = row.FindElement(By.CssSelector(".qty-input")).GetAttribute("value")?.Trim() ?? string.Empty;
 
         return new ProductDto
         {

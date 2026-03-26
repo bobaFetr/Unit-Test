@@ -6,27 +6,39 @@ using NUnit.Framework;
 namespace ECommerceTests.Login;
 
 [TestFixture]
+[CancelAfter(20000)]
 public sealed class LoginTests : BaseTest
 {
     /// <summary>
     /// Steps:
-    /// 1. Open the Signup / Login page.
-    /// 2. Log in with the valid credentials stored in the environment variables.
-    /// 3. Verify the home page reflects a successful authenticated state.
+    /// 1. Register a unique user through the new-customer flow.
+    /// 2. Log out and return to the login page.
+    /// 3. Log in with the DTO built from the registered user and verify the authenticated state.
     /// Expected Result:
-    /// The user is logged in successfully, the logout option is visible, and the logged-in user label is populated.
+    /// The user is logged in successfully, the logout option is visible, and the account link shows the expected email.
     /// </summary>
     [Test]
     public void ValidLogin_WithExistingCredentials_ShouldLogInSuccessfully()
     {
-        EnsureExistingLoginCredentialsAreConfigured();
-        var validUser = LoginUserFactory.CreateFromEnvironment();
+        var registrationUser = RegistrationUserFactory.CreateUniqueUser();
+        var registerPage = HomePage.GoToLoginPage().StartSignup(registrationUser);
+        registerPage.CreateAccount(registrationUser);
+
+        Assert.That(
+            HomePage.IsAccountCreatedVisible(),
+            Is.True,
+            "The precondition account should be created successfully before validating the login flow.");
+
+        HomePage.ContinueAfterAccountAction();
+        HomePage.Logout();
+
+        var validUser = LoginUserFactory.CreateFromRegistration(registrationUser);
         var loginPage = HomePage.GoToLoginPage();
 
         Assert.That(
             loginPage.IsCurrentPage(),
             Is.True,
-            "The Signup / Login page should display both login and signup sections before login is attempted.");
+            "The Demo Web Shop login page should display the expected sign-in sections before login is attempted.");
 
         loginPage.Login(validUser);
 
@@ -42,15 +54,15 @@ public sealed class LoginTests : BaseTest
                 "The logout navigation link should be visible after a successful login.");
             Assert.That(
                 HomePage.GetLoggedInUsername(),
-                Is.Not.Empty,
-                "The logged-in user banner should contain the authenticated user's display name.");
+                Is.EqualTo(registrationUser.Email),
+                "The account link should contain the authenticated user's email after a successful login.");
         });
     }
 
     /// <summary>
     /// Steps:
-    /// 1. Open the Signup / Login page.
-    /// 2. Attempt to log in with a valid email and an intentionally wrong password.
+    /// 1. Register a unique user and log out.
+    /// 2. Attempt to log in with the correct email and an intentionally wrong password.
     /// 3. Verify the login attempt is rejected with a meaningful error.
     /// Expected Result:
     /// The user remains unauthenticated and the incorrect credentials error message is displayed.
@@ -58,10 +70,20 @@ public sealed class LoginTests : BaseTest
     [Test]
     public void InvalidLogin_WithWrongPassword_ShouldShowValidationMessage()
     {
-        EnsureExistingLoginCredentialsAreConfigured();
-        var invalidUser = LoginUserFactory.CreateInvalidPasswordUser();
-        var loginPage = HomePage.GoToLoginPage();
+        var registrationUser = RegistrationUserFactory.CreateUniqueUser();
+        var registerPage = HomePage.GoToLoginPage().StartSignup(registrationUser);
+        registerPage.CreateAccount(registrationUser);
+        Assert.That(
+            HomePage.IsAccountCreatedVisible(),
+            Is.True,
+            "The precondition account should be created successfully before validating the invalid login flow.");
 
+        HomePage.ContinueAfterAccountAction();
+        HomePage.Logout();
+
+        var validUser = LoginUserFactory.CreateFromRegistration(registrationUser);
+        var invalidUser = LoginUserFactory.CreateInvalidPasswordUser(validUser);
+        var loginPage = HomePage.GoToLoginPage();
         loginPage.Login(invalidUser);
 
         Assert.Multiple(() =>

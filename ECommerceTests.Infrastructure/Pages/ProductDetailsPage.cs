@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using ECommerceTests.Infrastructure.DTOs;
 using OpenQA.Selenium;
 
@@ -5,14 +7,11 @@ namespace ECommerceTests.Infrastructure.Pages;
 
 public sealed class ProductDetailsPage : BasePage
 {
-    private readonly By _productName = By.XPath("//div[contains(@class, 'product-information')]//h2");
-    private readonly By _category = By.XPath("//div[contains(@class, 'product-information')]//p[contains(normalize-space(), 'Category:')]");
-    private readonly By _brand = By.XPath("//div[contains(@class, 'product-information')]//p[contains(normalize-space(), 'Brand:')]");
-    private readonly By _price = By.XPath("//div[contains(@class, 'product-information')]//span/span");
-    private readonly By _quantityInput = By.XPath("//input[@id='quantity']");
-    private readonly By _addToCartButton = By.XPath("//button[contains(@class, 'cart') and normalize-space()='Add to cart']");
-    private readonly By _cartModal = By.XPath("//div[@id='cartModal']");
-    private readonly By _viewCartModalLink = By.XPath("//div[@id='cartModal']//a[contains(@href, '/view_cart')]");
+    private readonly By _productName = By.CssSelector(".product-name h1");
+    private readonly By _price = By.CssSelector(".product-price [itemprop='price']");
+    private readonly By _quantityInput = By.CssSelector(".add-to-cart .qty-input");
+    private readonly By _addToCartButton = By.CssSelector(".add-to-cart .add-to-cart-button");
+    private readonly By _cartQuantityLabel = By.CssSelector(".header-links .cart-qty");
 
     public ProductDetailsPage(IWebDriver driver)
         : base(driver)
@@ -28,10 +27,8 @@ public sealed class ProductDetailsPage : BasePage
             Name = GetText(_productName),
             Price = GetText(_price),
             Quantity = quantity,
-            Category = GetText(_category).Replace("Category:", string.Empty).Trim(),
-            Brand = IsElementDisplayed(_brand, 2)
-                ? GetText(_brand).Replace("Brand:", string.Empty).Trim()
-                : string.Empty
+            Category = GetCategoryPath(),
+            Brand = string.Empty
         };
     }
 
@@ -42,13 +39,39 @@ public sealed class ProductDetailsPage : BasePage
 
     public void AddToCart()
     {
+        var cartQuantityBefore = GetCartQuantity();
         Click(_addToCartButton);
-        WaitHelper.UntilVisible(_cartModal);
+        WaitHelper.Until(_ => GetCartQuantity() > cartQuantityBefore);
     }
 
     public CartPage ViewCartFromModal()
     {
-        Click(_viewCartModalLink);
-        return new CartPage(Driver);
+        var cartPage = new CartPage(Driver);
+        cartPage.Open();
+        return cartPage;
+    }
+
+    private string GetCategoryPath()
+    {
+        var currentProductName = GetText(_productName);
+
+        var categoryItems = Driver.FindElements(By.CssSelector(".breadcrumb li"))
+            .Select(item => item.Text.Trim())
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .Select(text => text.Replace("/", string.Empty).Trim())
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .Where(text => !text.Equals("Home", StringComparison.OrdinalIgnoreCase))
+            .Where(text => !text.Equals(currentProductName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return string.Join(" >> ", categoryItems);
+    }
+
+    private int GetCartQuantity()
+    {
+        var quantityText = GetText(_cartQuantityLabel);
+        var digits = new string(quantityText.Where(char.IsDigit).ToArray());
+
+        return int.TryParse(digits, out var quantity) ? quantity : 0;
     }
 }

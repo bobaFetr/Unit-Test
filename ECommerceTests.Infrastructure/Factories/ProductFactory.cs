@@ -5,73 +5,41 @@ namespace ECommerceTests.Infrastructure.Factories;
 
 public static class ProductFactory
 {
-    public static ProductDto CreateBlueTop(string quantity = "1")
+    public static ProductDto CreateLaptop(string quantity = "1")
     {
         return new ProductDto
         {
-            Name = "Blue Top",
-            Price = "Rs. 500",
+            Name = "14.1-inch Laptop",
+            Price = "1590.00",
             Quantity = quantity
         };
     }
 
-    public static ProductDto CreateBlueTopDetails(string quantity = "1")
+    public static ProductDto CreateLaptopDetails(string quantity = "1")
     {
         return new ProductDto
         {
-            Name = "Blue Top",
-            Price = "Rs. 500",
+            Name = "14.1-inch Laptop",
+            Price = "1590.00",
             Quantity = quantity,
-            Category = "Women > Tops",
-            Brand = "Polo"
+            Category = "COMPUTERS >> NOTEBOOKS",
+            Brand = string.Empty
         };
     }
 
-    public static ProductDto CreateMenTshirt(string quantity = "1")
-    {
-        return new ProductDto
-        {
-            Name = "Men Tshirt",
-            Price = "Rs. 400",
-            Quantity = quantity
-        };
-    }
-
-    public static ProductDto CreateWinterTop(string quantity = "1")
-    {
-        return new ProductDto
-        {
-            Name = "Winter Top",
-            Price = "Rs. 600",
-            Quantity = quantity
-        };
-    }
-
-    public static ProductDto CreateSummerWhiteTop(string quantity = "1")
-    {
-        return new ProductDto
-        {
-            Name = "Summer White Top",
-            Price = "Rs. 400",
-            Quantity = quantity
-        };
-    }
-
-    public static IReadOnlyList<ProductDto> CreateBlueTopOnlySearchResults()
+    public static IReadOnlyList<ProductDto> CreateLaptopOnlySearchResults()
     {
         return new[]
         {
-            CreateBlueTop()
+            CreateLaptop()
         };
     }
 
-    public static IReadOnlyList<ProductDto> CreateTopSearchResults()
+    public static IReadOnlyList<ProductDto> CreateLaptopSearchResults()
     {
         return new[]
         {
-            CreateBlueTop(),
-            CreateWinterTop(),
-            CreateSummerWhiteTop()
+            CreateLaptop()
         };
     }
 

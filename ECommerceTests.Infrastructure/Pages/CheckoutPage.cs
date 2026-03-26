@@ -8,11 +8,11 @@ namespace ECommerceTests.Infrastructure.Pages;
 
 public sealed class CheckoutPage : BasePage
 {
-    private readonly By _addressDetailsHeader = By.XPath("//h2[normalize-space()='Address Details']");
-    private readonly By _reviewOrderHeader = By.XPath("//h2[normalize-space()='Review Your Order']");
-    private readonly By _checkoutRows = By.XPath("//table[contains(@class, 'table-condensed')]//tr[starts-with(@id, 'product-')]");
-    private readonly By _commentTextArea = By.XPath("//textarea[@name='message']");
-    private readonly By _placeOrderButton = By.XPath("//a[normalize-space()='Place Order']");
+    private readonly By _checkoutSteps = By.CssSelector("#checkout-steps, .one-page-checkout, .checkout-page");
+    private readonly By _billingAddressStep = By.CssSelector("#opc-billing, .billing-address");
+    private readonly By _checkoutRows = By.CssSelector("table.cart tbody tr.cart-item-row");
+    private readonly By _commentTextArea = By.CssSelector("textarea");
+    private readonly By _placeOrderButton = By.CssSelector("#confirm-order-buttons-container input, .confirm-order-next-step-button");
 
     public CheckoutPage(IWebDriver driver)
         : base(driver)
@@ -23,7 +23,13 @@ public sealed class CheckoutPage : BasePage
 
     public bool IsCurrentPage()
     {
-        return IsElementDisplayed(_addressDetailsHeader) && IsElementDisplayed(_reviewOrderHeader);
+        return Driver.Url.Contains(Urls.Checkout, System.StringComparison.OrdinalIgnoreCase) ||
+               IsElementDisplayed(_checkoutSteps, 5);
+    }
+
+    public bool IsBillingAddressStepVisible()
+    {
+        return IsElementDisplayed(_billingAddressStep, 5);
     }
 
     public IReadOnlyList<ProductDto> GetOrderProducts()
@@ -40,19 +46,22 @@ public sealed class CheckoutPage : BasePage
 
     public void EnterComment(string comment)
     {
-        Type(_commentTextArea, comment);
+        if (IsElementDisplayed(_commentTextArea, 2))
+        {
+            Type(_commentTextArea, comment);
+        }
     }
 
     public bool IsPlaceOrderVisible()
     {
-        return IsElementDisplayed(_placeOrderButton);
+        return IsElementDisplayed(_placeOrderButton, 2);
     }
 
     private static ProductDto MapCheckoutRow(IWebElement row)
     {
-        var name = row.FindElement(By.XPath(".//td[contains(@class, 'cart_description')]//a")).Text.Trim();
-        var price = row.FindElement(By.XPath(".//td[contains(@class, 'cart_price')]//p")).Text.Trim();
-        var quantity = row.FindElement(By.XPath(".//td[contains(@class, 'cart_quantity')]//*[self::button or self::input]")).Text.Trim();
+        var name = row.FindElement(By.CssSelector(".product-name")).Text.Trim();
+        var price = row.FindElement(By.CssSelector(".product-unit-price")).Text.Trim();
+        var quantity = row.FindElement(By.CssSelector(".qty-input")).GetAttribute("value")?.Trim() ?? string.Empty;
 
         return new ProductDto
         {

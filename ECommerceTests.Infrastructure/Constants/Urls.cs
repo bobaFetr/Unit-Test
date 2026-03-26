@@ -2,12 +2,14 @@ namespace ECommerceTests.Infrastructure.Constants;
 
 public static class Urls
 {
-    public const string BaseUrl = "https://automationexercise.com";
+    public const string BaseUrl = "https://demowebshop.tricentis.com";
+    public const string Home = "/";
     public const string Login = "/login";
-    public const string Products = "/products";
-    public const string Cart = "/view_cart";
-    public const string Checkout = "/checkout";
-    public const string Signup = "/signup";
+    public const string Search = "/search";
+    public const string Products = "/";
+    public const string Cart = "/cart";
+    public const string Checkout = "/onepagecheckout";
+    public const string Signup = "/register";
 
-    public static string ProductDetails(int productId) => $"/product_details/{productId}";
+    public static string ProductDetails(string slug) => $"/{slug.TrimStart('/')}";
 }

@@ -5,28 +5,17 @@ namespace ECommerceTests.Infrastructure.Pages;
 
 public sealed class SignupPage : BasePage
 {
-    private readonly By _enterAccountInformationHeader = By.XPath("//b[normalize-space()='Enter Account Information']");
-    private readonly By _mrTitleRadio = By.XPath("//input[@id='id_gender1']");
-    private readonly By _mrsTitleRadio = By.XPath("//input[@id='id_gender2']");
-    private readonly By _nameInput = By.XPath("//input[@id='name']");
-    private readonly By _emailInput = By.XPath("//input[@id='email']");
-    private readonly By _passwordInput = By.XPath("//input[@id='password']");
-    private readonly By _daysDropdown = By.XPath("//select[@id='days']");
-    private readonly By _monthsDropdown = By.XPath("//select[@id='months']");
-    private readonly By _yearsDropdown = By.XPath("//select[@id='years']");
-    private readonly By _newsletterCheckbox = By.XPath("//input[@id='newsletter']");
-    private readonly By _offersCheckbox = By.XPath("//input[@id='optin']");
-    private readonly By _firstNameInput = By.XPath("//input[@id='first_name']");
-    private readonly By _lastNameInput = By.XPath("//input[@id='last_name']");
-    private readonly By _companyInput = By.XPath("//input[@id='company']");
-    private readonly By _addressLine1Input = By.XPath("//input[@id='address1']");
-    private readonly By _addressLine2Input = By.XPath("//input[@id='address2']");
-    private readonly By _countryDropdown = By.XPath("//select[@id='country']");
-    private readonly By _stateInput = By.XPath("//input[@id='state']");
-    private readonly By _cityInput = By.XPath("//input[@id='city']");
-    private readonly By _zipCodeInput = By.XPath("//input[@id='zipcode']");
-    private readonly By _mobileNumberInput = By.XPath("//input[@id='mobile_number']");
-    private readonly By _createAccountButton = By.XPath("//button[@data-qa='create-account' or normalize-space()='Create Account']");
+    private readonly By _registerHeader = By.XPath("//div[contains(@class, 'registration-page')]//h1[normalize-space()='Register']");
+    private readonly By _maleTitleRadio = By.Id("gender-male");
+    private readonly By _femaleTitleRadio = By.Id("gender-female");
+    private readonly By _firstNameInput = By.Id("FirstName");
+    private readonly By _lastNameInput = By.Id("LastName");
+    private readonly By _emailInput = By.Id("Email");
+    private readonly By _emailValidationMessage = By.CssSelector("[data-valmsg-for='Email']");
+    private readonly By _passwordInput = By.Id("Password");
+    private readonly By _confirmPasswordInput = By.Id("ConfirmPassword");
+    private readonly By _createAccountButton = By.Id("register-button");
+    private readonly By _existingEmailError = By.CssSelector(".message-error .validation-summary-errors li");
 
     public SignupPage(IWebDriver driver)
         : base(driver)
@@ -37,7 +26,7 @@ public sealed class SignupPage : BasePage
 
     public bool IsEnterAccountInformationVisible()
     {
-        return IsElementDisplayed(_enterAccountInformationHeader);
+        return IsElementDisplayed(_registerHeader);
     }
 
     public string GetLockedEmail()
@@ -47,31 +36,45 @@ public sealed class SignupPage : BasePage
 
     public void CreateAccount(RegistrationUserDto user)
     {
-        if (user.Title.Equals("Mrs", System.StringComparison.OrdinalIgnoreCase))
+        if (user.Title.Equals("Mrs", System.StringComparison.OrdinalIgnoreCase) ||
+            user.Title.Equals("Ms", System.StringComparison.OrdinalIgnoreCase) ||
+            user.Title.Equals("Female", System.StringComparison.OrdinalIgnoreCase))
         {
-            ClickWithJavaScript(_mrsTitleRadio);
+            ClickWithJavaScript(_femaleTitleRadio);
         }
         else
         {
-            ClickWithJavaScript(_mrTitleRadio);
+            ClickWithJavaScript(_maleTitleRadio);
         }
 
-        Type(_passwordInput, user.Password);
-        SelectByText(_daysDropdown, user.Day);
-        SelectByText(_monthsDropdown, user.Month);
-        SelectByText(_yearsDropdown, user.Year);
-        ClickWithJavaScript(_newsletterCheckbox);
-        ClickWithJavaScript(_offersCheckbox);
         Type(_firstNameInput, user.FirstName);
         Type(_lastNameInput, user.LastName);
-        Type(_companyInput, user.Company);
-        Type(_addressLine1Input, user.AddressLine1);
-        Type(_addressLine2Input, user.AddressLine2);
-        SelectByText(_countryDropdown, user.Country);
-        Type(_stateInput, user.State);
-        Type(_cityInput, user.City);
-        Type(_zipCodeInput, user.ZipCode);
-        Type(_mobileNumberInput, user.MobileNumber);
+        Type(_emailInput, user.Email);
+        Type(_passwordInput, user.Password);
+        Type(_confirmPasswordInput, user.Password);
         Click(_createAccountButton);
+    }
+
+    public string GetExistingEmailErrorText()
+    {
+        return GetText(_existingEmailError);
+    }
+
+    public string GetSignupEmailValidationMessage()
+    {
+        var browserValidationMessage = GetValidationMessage(_emailInput);
+        if (!string.IsNullOrWhiteSpace(browserValidationMessage))
+        {
+            return browserValidationMessage;
+        }
+
+        return IsElementDisplayed(_emailValidationMessage, 2)
+            ? GetText(_emailValidationMessage)
+            : string.Empty;
+    }
+
+    public string GetSignupEmailValue()
+    {
+        return GetValue(_emailInput);
     }
 }
